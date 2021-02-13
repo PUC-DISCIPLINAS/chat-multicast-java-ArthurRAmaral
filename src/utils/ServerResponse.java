@@ -1,12 +1,24 @@
+package utils;
+
 import enums.ResponseCode;
 
 import java.io.Serializable;
 
-public class Response implements Serializable {
+public class ServerResponse implements Serializable {
     private ResponseCode code;
     private String mensagem;
 
-    public Response(ResponseCode code, String mensagem) {
+    public ServerResponse(ResponseCode code) {
+        this.code = code;
+        this.mensagem = "";
+    }
+
+    public ServerResponse(String mensagem) {
+        this.mensagem = mensagem;
+        this.code = ResponseCode.KEEP_CONNECTION;
+    }
+
+    public ServerResponse(ResponseCode code, String mensagem) {
         this.code = code;
         this.mensagem = mensagem;
     }

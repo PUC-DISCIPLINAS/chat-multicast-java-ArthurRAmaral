@@ -4,7 +4,7 @@ import interfaces.SerializeCoverter;
 
 import java.io.*;
 
-public class SerializeObjectAndBytes implements SerializeCoverter<ServerResponse> {
+public class ServerResponseSerializeConvert implements SerializeCoverter<ServerResponse> {
     public byte[] serialize(ServerResponse obj) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ObjectOutputStream os = new ObjectOutputStream(out);
