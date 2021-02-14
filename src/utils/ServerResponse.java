@@ -5,17 +5,21 @@ import enums.ResponseCode;
 import java.io.Serializable;
 
 public class ServerResponse implements Serializable {
-    private ResponseCode code;
-    private String mensagem;
+    private ResponseCode code = ResponseCode.KEEP_CONNECTION;
+    private String mensagem = "";
+    private Object body = null;
 
     public ServerResponse(ResponseCode code) {
         this.code = code;
-        this.mensagem = "";
     }
 
     public ServerResponse(String mensagem) {
         this.mensagem = mensagem;
-        this.code = ResponseCode.KEEP_CONNECTION;
+    }
+
+    public ServerResponse(ResponseCode code, Object body) {
+        this.code = code;
+        this.body = body;
     }
 
     public ServerResponse(ResponseCode code, String mensagem) {
@@ -23,19 +27,21 @@ public class ServerResponse implements Serializable {
         this.mensagem = mensagem;
     }
 
+    public ServerResponse(ResponseCode code, String mensagem, Object body) {
+        this.code = code;
+        this.mensagem = mensagem;
+        this.body = body;
+    }
+
+    public Object getBody() {
+        return body;
+    }
+
     public ResponseCode getCode() {
         return code;
     }
 
-    public void setCode(ResponseCode code) {
-        this.code = code;
-    }
-
     public String getMensagem() {
         return mensagem;
-    }
-
-    public void setMensagem(String mensagem) {
-        this.mensagem = mensagem;
     }
 }

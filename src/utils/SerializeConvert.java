@@ -4,16 +4,21 @@ import interfaces.SerializeCoverter;
 
 import java.io.*;
 
-public class ServerResponseSerializeConvert implements SerializeCoverter<ServerResponse> {
-    public byte[] serialize(ServerResponse obj) throws IOException {
+public class SerializeConvert<T extends Serializable>{
+    public byte[] serialize(T obj) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ObjectOutputStream os = new ObjectOutputStream(out);
         os.writeObject(obj);
         return out.toByteArray();
     }
-    public ServerResponse deserialize(byte[] data) throws IOException, ClassNotFoundException {
+
+    public T deserialize(byte[] data) throws IOException, ClassNotFoundException {
         ByteArrayInputStream in = new ByteArrayInputStream(data);
         ObjectInputStream is = new ObjectInputStream(in);
-        return (ServerResponse) is.readObject();
+        try {
+            return (T) is.readObject();
+        } catch (Exception e) {
+            return null;
+        }
     }
 }
