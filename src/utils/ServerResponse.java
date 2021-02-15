@@ -3,23 +3,20 @@ package utils;
 import enums.ResponseCode;
 
 import java.io.Serializable;
+import java.util.List;
 
 public class ServerResponse implements Serializable {
     private ResponseCode code = ResponseCode.KEEP_CONNECTION;
     private String mensagem = "";
-    private Object body = null;
-
-    public ServerResponse(ResponseCode code) {
-        this.code = code;
-    }
+    private ChatRoom chatRoom = null;
+    private List<ChatRoom> roomList = null;
 
     public ServerResponse(String mensagem) {
         this.mensagem = mensagem;
     }
 
-    public ServerResponse(ResponseCode code, Object body) {
+    public ServerResponse(ResponseCode code) {
         this.code = code;
-        this.body = body;
     }
 
     public ServerResponse(ResponseCode code, String mensagem) {
@@ -27,14 +24,22 @@ public class ServerResponse implements Serializable {
         this.mensagem = mensagem;
     }
 
-    public ServerResponse(ResponseCode code, String mensagem, Object body) {
+    public ServerResponse(ResponseCode code, List<ChatRoom> roomList) {
         this.code = code;
-        this.mensagem = mensagem;
-        this.body = body;
+        this.roomList = roomList;
     }
 
-    public Object getBody() {
-        return body;
+    public ServerResponse(ResponseCode code, ChatRoom chatRoom) {
+        this.code = code;
+        this.chatRoom = chatRoom;
+    }
+
+    public List<ChatRoom> getRoomList() {
+        return roomList;
+    }
+
+    public ChatRoom getChatRoom() {
+        return chatRoom;
     }
 
     public ResponseCode getCode() {

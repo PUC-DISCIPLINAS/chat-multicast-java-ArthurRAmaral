@@ -2,10 +2,7 @@ import enums.ResponseCode;
 import utils.*;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.InetAddress;
-import java.net.MulticastSocket;
-import java.net.SocketException;
+import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,19 +12,20 @@ public class MultCastMessageServer {
 
     static List<ChatRoom> rooms = new ArrayList<>();
     static MulticastSocket mSocket = null;
+    static DatagramSocket aSocket = null;
 
     public static void main(String[] args) {
 
         String message;
 
         try {
-            mSocket = new MulticastSocket(ConnectionConfigurations.MULTICAST_SERVER_PORT);
+            aSocket = new DatagramSocket(ConnectionConfigurations.SERVER_PORT);
 
             System.out.println("Servidor: ouvindo porta UDP/" + ConnectionConfigurations.SERVER_PORT + ".");
 
             while (true) {
                 DatagramPacket request = createDatagramPacket();
-                mSocket.receive(request);
+                aSocket.receive(request);
 
                 message = new String(request.getData()).trim();
                 ServerResponse serverResponse = deCodeMessage(message, request);
@@ -37,15 +35,15 @@ public class MultCastMessageServer {
                 byte[] serializedResponse = serverResponseSerializeConvert.serialize(serverResponse);
                 DatagramPacket reply = new DatagramPacket(serializedResponse, serializedResponse.length, request.getAddress(),
                         request.getPort());
-                mSocket.send(reply);
+                aSocket.send(reply);
             }
         } catch (SocketException e) {
             System.out.println("Socket: " + e.getMessage());
         } catch (IOException e) {
             System.out.println("IO: " + e.getMessage());
         } finally {
-            if (mSocket != null)
-                mSocket.close();
+            if (aSocket != null)
+                aSocket.close();
         }
     }
 
@@ -78,9 +76,10 @@ public class MultCastMessageServer {
                     String roomName = params[0];
                     String ownerNick = params[1];
 
-                    InetAddress address = createNewRoom(roomName, ownerNick, request.getAddress());
-                    if (address != null) {
-                        return new ServerResponse("Room " + roomName + " was created at addres " + address);
+                    ChatRoom chatRoom = createNewRoom(roomName, new User(request.getAddress(), ownerNick));
+
+                    if (chatRoom != null) {
+                        return new ServerResponse(ResponseCode.START_CHAT_ROOM, chatRoom);
                     } else {
                         return new ServerResponse("Failed at creating room");
                     }
@@ -95,12 +94,30 @@ public class MultCastMessageServer {
                     String roomName = params[0];
                     String memberNick = params[1];
 
-                    ChatRoom chatRoom = join(roomName, memberNick, request.getAddress());
+                    ChatRoom chatRoom = join(roomName, new User(request.getAddress(), memberNick));
                     if (chatRoom != null) {
-                        return new ServerResponse(ResponseCode.ROOM_ID, "Joined room", chatRoom);
+                        return new ServerResponse(ResponseCode.START_CHAT_ROOM, chatRoom);
                     } else {
                         return new ServerResponse("Room not found");
                     }
+                }
+            case "/leave":
+                if (commandParams != null) {
+                    String[] params = commandParams.split(" ", 2);
+
+                    if (params.length != 1) return new ServerResponse("Error: params are wrong");
+
+                    String roomName = params[0];
+
+                    boolean work = leave(roomName, request.getAddress());
+
+                    if (work) {
+                        return new ServerResponse(ResponseCode.END_CHAT_ROOM);
+                    } else {
+                        return new ServerResponse("Room not found or user not registered in this room");
+                    }
+                } else {
+                    return new ServerResponse("Error: Missed room name");
                 }
             case "/allrooms":
                 return new ServerResponse(ResponseCode.ALL_ROOMS, rooms);
@@ -113,20 +130,29 @@ public class MultCastMessageServer {
 
     }
 
-    private static ChatRoom join(String roomName, String memberNick, InetAddress address) {
+    private static boolean leave(String roomName, InetAddress memberAddress) {
         for (ChatRoom room : rooms) {
             if (room.getName().equals(roomName)) {
-                room.addUser(new User(address, memberNick));
+                return room.removeUserByAdress(memberAddress);
+            }
+        }
+        return false;
+    }
+
+    private static ChatRoom join(String roomName, User member) {
+        for (ChatRoom room : rooms) {
+            if (room.getName().equals(roomName)) {
+                room.addUser(member);
                 return room;
             }
         }
         return null;
     }
 
-    private static InetAddress createNewRoom(String roomName, String ownerNick, InetAddress ownerAddress) {
+    private static ChatRoom createNewRoom(String roomName, User owner) {
         try {
             InetAddress address = InetAddress.getByName("224.1.1.1");
-            ChatRoom newRoom = new ChatRoom(roomName, address, new User(ownerAddress, ownerNick));
+            ChatRoom newRoom = new ChatRoom(roomName, address, owner);
 
             boolean find = false;
 
@@ -138,8 +164,9 @@ public class MultCastMessageServer {
             }
 
             if (!find) {
+                newRoom.addUser(owner);
                 rooms.add(newRoom);
-                return address;
+                return newRoom;
             } else {
                 return null;
             }

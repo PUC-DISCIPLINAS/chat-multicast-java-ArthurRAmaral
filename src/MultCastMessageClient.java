@@ -7,33 +7,29 @@ import java.util.List;
 import java.util.Scanner;
 
 public class MultCastMessageClient {
-    static final int SERVER_PORT = ConnectionConfigurations.SERVER_PORT;
-    static final int DEFAULT_BUFFER_SIZE = ConnectionConfigurations.DEFAULT_BUFFER_SIZE;
-    static final int MULTICAST_SERVER_PORT = ConnectionConfigurations.MULTICAST_SERVER_PORT;
     static final SerializeConvert<ServerResponse> serverResponseSerializeConvert = new SerializeConvert<>();
     static final SerializeConvert<ChatMessage> chatMessageSerializeConvert = new SerializeConvert<>();
     static final Scanner read = new Scanner(System.in);
     static final String startCommand = "/start";
+    static final String leaveCommand = "/leave";
     static String myNickname = "";
     static InetAddress myAddress;
 
     public static void main(String[] args) {
-        final int MULTICAST_SERVER_PORT = ConnectionConfigurations.MULTICAST_SERVER_PORT;
-        byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
-
+        byte[] buffer = new byte[ConnectionConfigurations.DEFAULT_BUFFER_SIZE];
 
         DatagramPacket request;
         ServerResponse serverResponse;
         DatagramPacket reply;
-        try (DatagramSocket aSocket = new DatagramSocket(); MulticastSocket mSocket = new MulticastSocket(MULTICAST_SERVER_PORT)) {
 
+        try (DatagramSocket aSocket = new DatagramSocket()) {
             myAddress = InetAddress.getByName(args[0]);
 
             System.out.print("Inser your name: ");
             myNickname = read.next();
             String initialCommand = startCommand + " " + myNickname;
 
-            request = new DatagramPacket(initialCommand.getBytes(), initialCommand.length(), myAddress, SERVER_PORT);
+            request = new DatagramPacket(initialCommand.getBytes(), initialCommand.length(), myAddress, ConnectionConfigurations.SERVER_PORT);
             aSocket.send(request);
 
 
@@ -47,12 +43,15 @@ public class MultCastMessageClient {
             }
 
             System.out.println(serverResponse.getMensagem() + "\n\n");
+
+            read.nextLine();
+
             do {
                 String comand = read.nextLine();
 
                 comand += " " + myNickname;
 
-                request = new DatagramPacket(comand.getBytes(), comand.length(), myAddress, SERVER_PORT);
+                request = new DatagramPacket(comand.getBytes(), comand.length(), myAddress, ConnectionConfigurations.SERVER_PORT);
                 aSocket.send(request);
 
                 reply = new DatagramPacket(buffer, buffer.length);
@@ -60,7 +59,7 @@ public class MultCastMessageClient {
 
                 serverResponse = serverResponseSerializeConvert.deserialize(reply.getData());
 
-                deCodeResponse(serverResponse, mSocket);
+                deCodeResponse(serverResponse, aSocket);
             } while (serverResponse.getCode() != ResponseCode.END_CONNECTION);
         } catch (SocketException e) {
             System.out.println("Socket: " + e.getMessage());
@@ -71,7 +70,7 @@ public class MultCastMessageClient {
         }
     }
 
-    private static void deCodeResponse(ServerResponse serverResponse, MulticastSocket mSocket) throws IOException {
+    private static void deCodeResponse(ServerResponse serverResponse, DatagramSocket aSocket) throws IOException {
         ResponseCode code = serverResponse.getCode();
 
         switch (code) {
@@ -80,8 +79,13 @@ public class MultCastMessageClient {
             case KEEP_CONNECTION:
                 System.out.println(serverResponse.getMensagem());
                 break;
-            case ROOM_ID: {
-                ChatRoom room = (ChatRoom) serverResponse.getBody();
+            case END_CHAT_ROOM:
+                System.out.println("You leaved the room");
+                break;
+            case START_CHAT_ROOM: {
+                MulticastSocket mSocket = new MulticastSocket(ConnectionConfigurations.MULTICAST_SERVER_PORT);
+
+                ChatRoom room = serverResponse.getChatRoom();
                 mSocket.joinGroup(room.getAddress());
                 System.out.println("-----------" + room.getName().toUpperCase() + "-----------");
                 System.out.println("Members: " + room.getMembers());
@@ -98,27 +102,33 @@ public class MultCastMessageClient {
                         break;
                     }
                 }
-                boolean exit = true;
+                boolean exit = false;
                 do {
                     message = read.nextLine();
 
-                    if (!message.equals("/exit")) {
-
-
+                    if (!message.equals(leaveCommand)) {
                         byte[] bytes = chatMessageSerializeConvert.serialize(new ChatMessage(me, message));
 
-                        DatagramPacket messageOut = new DatagramPacket(bytes, bytes.length, multicastAddress, MULTICAST_SERVER_PORT);
+                        DatagramPacket messageOut = new DatagramPacket(bytes, bytes.length, multicastAddress, ConnectionConfigurations.MULTICAST_SERVER_PORT);
                         mSocket.send(messageOut);
                     } else {
-                        exit = false;
-                    }
-                } while (exit);
+                        byte[] bytes = chatMessageSerializeConvert.serialize(new ChatMessage(me, "I'm leaving"));
 
+                        DatagramPacket messageOut = new DatagramPacket(bytes, bytes.length, multicastAddress, ConnectionConfigurations.MULTICAST_SERVER_PORT);
+                        mSocket.send(messageOut);
+
+                        DatagramPacket leaveRequest = new DatagramPacket(leaveCommand.getBytes(), leaveCommand.length(), myAddress, ConnectionConfigurations.SERVER_PORT);
+                        aSocket.send(leaveRequest);
+
+                        exit = true;
+                    }
+                } while (!exit);
             }
+            break;
             case ALL_ROOMS: {
-                List<ChatRoom> rooms = (List<ChatRoom>) serverResponse.getBody();
+                List<ChatRoom> rooms = serverResponse.getRoomList();
                 System.out.println("-----------All Rooms-----------");
-                System.out.println("Members: " + rooms);
+                System.out.println(rooms);
                 break;
             }
             default:
