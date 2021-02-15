@@ -139,7 +139,6 @@ public class MultCastMessageServer {
 
             if (!find) {
                 rooms.add(newRoom);
-                mSocket.joinGroup(newRoom.getAddress());
                 return address;
             } else {
                 return null;

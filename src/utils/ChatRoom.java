@@ -12,6 +12,7 @@ public class ChatRoom implements Serializable, Runnable {
     static final SerializeConvert<ChatMessage> chatMessageSerializeConvert = new SerializeConvert<>();
     final private String name;
     final private User owner;
+
     private InetAddress address;
     private List<User> users = new ArrayList<>();
     private MulticastSocket mSocket;
@@ -70,7 +71,7 @@ public class ChatRoom implements Serializable, Runnable {
             try {
                 mSocket.receive(messageIn);
                 ChatMessage message = chatMessageSerializeConvert.deserialize(messageIn.getData());
-                System.out.println(message.getOwner() + ": " + message.getText());
+                System.out.println(message.getOwner().getNickname() + ": " + message.getText());
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (ClassNotFoundException e) {
