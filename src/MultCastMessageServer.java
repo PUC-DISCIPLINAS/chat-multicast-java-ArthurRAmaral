@@ -33,9 +33,9 @@ public class MultCastMessageServer {
                 System.out.println("Servidor: recebido '" + message + "'.");
 
                 byte[] serializedResponse = serverResponseSerializeConvert.serialize(serverResponse);
-                DatagramPacket reply = new DatagramPacket(serializedResponse, serializedResponse.length, request.getAddress(),
+                DatagramPacket response = new DatagramPacket(serializedResponse, serializedResponse.length, request.getAddress(),
                         request.getPort());
-                aSocket.send(reply);
+                aSocket.send(response);
             }
         } catch (SocketException e) {
             System.out.println("Socket: " + e.getMessage());
@@ -63,33 +63,40 @@ public class MultCastMessageServer {
         if (sliptedCommand.length > 1)
             commandParams = sliptedCommand[1];
 
-        switch (command) {
-            case "/start":
-                return new ServerResponse(ResponseCode.START_CONNECTION, "Conected");
-            case "/newroom":
-                if (commandParams != null) {
-                    String[] params = commandParams.split(" ", 2);
+        String paramsErrorMessage = "";
 
-                    if (params.length != 2) return new ServerResponse("Failed to joind room you need to send:\n" +
-                            "/newroom <room-name>");
+        switch (command) {
+            case Commands.start:
+                return new ServerResponse(ResponseCode.START_CONNECTION, "Conected");
+            case Commands.newRoom:
+                paramsErrorMessage = "Failed to create room. You need to send:\n" +
+                        "/newroom <room-name> <group-address>";
+                if (commandParams != null) {
+                    String[] params = commandParams.split(" ", 3);
+
+                    if (params.length != 3) return new ServerResponse(paramsErrorMessage);
 
                     String roomName = params[0];
-                    String ownerNick = params[1];
+                    String groupAddress = params[1];
+                    String ownerNick = params[2];
 
-                    ChatRoom chatRoom = createNewRoom(roomName, new User(request.getAddress(), ownerNick));
+                    ChatRoom chatRoom = createNewRoom(roomName, new User(request.getAddress(), ownerNick), groupAddress);
 
                     if (chatRoom != null) {
                         return new ServerResponse(ResponseCode.START_CHAT_ROOM, chatRoom);
                     } else {
-                        return new ServerResponse("Failed at creating room");
+                        return new ServerResponse("Already exits a room with this name or address");
                     }
+                } else {
+                    return new ServerResponse(paramsErrorMessage);
                 }
-            case "/join":
+            case Commands.join:
+                paramsErrorMessage = "Failed to join room. You need to send:\n" +
+                        "/join <room-name>";
                 if (commandParams != null) {
                     String[] params = commandParams.split(" ", 2);
 
-                    if (params.length != 2) return new ServerResponse("Failed to joind room you need to send:\n" +
-                            "/join <room-name>");
+                    if (params.length != 2) return new ServerResponse(paramsErrorMessage);
 
                     String roomName = params[0];
                     String memberNick = params[1];
@@ -100,12 +107,16 @@ public class MultCastMessageServer {
                     } else {
                         return new ServerResponse("Room not found");
                     }
+                } else {
+                    return new ServerResponse(paramsErrorMessage);
                 }
-            case "/leave":
+            case Commands.leave:
+                paramsErrorMessage = "Failed to leave room.";
+
                 if (commandParams != null) {
                     String[] params = commandParams.split(" ", 2);
 
-                    if (params.length != 1) return new ServerResponse("Error: params are wrong");
+                    if (params.length != 1) return new ServerResponse(paramsErrorMessage);
 
                     String roomName = params[0];
 
@@ -117,12 +128,29 @@ public class MultCastMessageServer {
                         return new ServerResponse("Room not found or user not registered in this room");
                     }
                 } else {
-                    return new ServerResponse("Error: Missed room name");
+                    return new ServerResponse(paramsErrorMessage);
                 }
-            case "/allrooms":
+            case Commands.allRooms:
                 return new ServerResponse(ResponseCode.ALL_ROOMS, rooms);
-            case "/end":
+            case Commands.end:
                 return new ServerResponse(ResponseCode.END_CONNECTION, "Connection ended");
+            case Commands.members:
+                paramsErrorMessage = "Failed to get room members.";
+                if (commandParams != null) {
+                    String[] params = commandParams.split(" ", 2);
+
+                    if (params.length != 1) return new ServerResponse(paramsErrorMessage);
+
+                    String roomName = params[0];
+                    for (ChatRoom room : rooms) {
+                        if (room.getName().equals(roomName)) {
+                            return new ServerResponse(ResponseCode.MEMBERS, room);
+                        }
+                    }
+                    return new ServerResponse("Room not found");
+                } else {
+                    return new ServerResponse(paramsErrorMessage);
+                }
             default:
                 return new ServerResponse("Invalid command");
         }
@@ -149,9 +177,9 @@ public class MultCastMessageServer {
         return null;
     }
 
-    private static ChatRoom createNewRoom(String roomName, User owner) {
+    private static ChatRoom createNewRoom(String roomName, User owner, String groupAddress) {
         try {
-            InetAddress address = InetAddress.getByName("224.1.1.1");
+            InetAddress address = InetAddress.getByName(groupAddress);
             ChatRoom newRoom = new ChatRoom(roomName, address, owner);
 
             boolean find = false;

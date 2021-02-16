@@ -7,4 +7,5 @@ public enum ResponseCode {
     END_CHAT_ROOM,
     ALL_ROOMS,
     END_CONNECTION,
+    MEMBERS;
 }

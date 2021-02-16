@@ -7,6 +7,7 @@ import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ChatRoom implements Serializable {
     static final SerializeConvert<ChatMessage> chatMessageSerializeConvert = new SerializeConvert<>();
@@ -15,6 +16,8 @@ public class ChatRoom implements Serializable {
 
     private InetAddress address;
     private List<User> users = new ArrayList<>();
+
+    private AtomicBoolean isListening = new AtomicBoolean(false);
 
     public ChatRoom(String name, InetAddress address, User owner) {
         this.name = name;
@@ -63,19 +66,24 @@ public class ChatRoom implements Serializable {
     }
 
     public void listenRoom(MulticastSocket mSocket) {
+        isListening.set(true);
         new Thread(() -> {
-            while (true) {
+            while (isListening.get()) {
                 byte[] buffer = new byte[ConnectionConfigurations.DEFAULT_BUFFER_SIZE];
                 DatagramPacket messageIn = new DatagramPacket(buffer, buffer.length);
                 try {
                     mSocket.receive(messageIn);
                     ChatMessage message = chatMessageSerializeConvert.deserialize(messageIn.getData());
                     System.out.println(message.getOwner().getNickname() + ": " + message.getText());
-                } catch (IOException | ClassNotFoundException e) {
+                } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
         }).start();
+    }
+
+    public void stopListeningRoom() {
+        isListening.set(false);
     }
 
     public boolean removeUserByAdress(InetAddress userAddress) {
