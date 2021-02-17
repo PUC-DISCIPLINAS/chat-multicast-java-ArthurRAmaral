@@ -1,15 +1,15 @@
 # Multicast chat
 >### Como utilizar
 > - Se direcione até o diretorio que contem os arquivos .class:
->```shell script
+>```bash
 >cd out/production/chat-multicast-java-ArthurRAmaral/
 >```
 >- Para executar o server:
->```shell script
+>```bash
 >java MultCastMessageServer
 >```
 >- Para executar o client:
->```shell script
+>```bash
 >java MultCastMessageClient
 >```
  
