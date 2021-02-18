@@ -45,10 +45,6 @@ public class ChatRoom implements Serializable {
         users.add(user);
     }
 
-    public void removeUser(User user) {
-        users.remove(user);
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -79,6 +75,7 @@ public class ChatRoom implements Serializable {
                     e.printStackTrace();
                 }
             }
+            System.out.println("Stop linsten room " + this.getName());
         }).start();
     }
 
@@ -86,7 +83,7 @@ public class ChatRoom implements Serializable {
         isListening.set(false);
     }
 
-    public boolean removeUserByAdress(InetAddress userAddress) {
-        return this.getMembers().removeIf((user) -> user.address.equals(userAddress));
+    public boolean removeUser(User user) {
+        return this.getMembers().removeIf((member) -> member.equals(user));
     }
 }

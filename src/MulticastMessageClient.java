@@ -6,9 +6,10 @@ import java.net.*;
 import java.util.List;
 import java.util.Scanner;
 
-public class MultCastMessageClient {
+public class MulticastMessageClient {
     static final SerializeConvert<ServerResponse> serverResponseSerializeConvert = new SerializeConvert<>();
     static final SerializeConvert<ChatMessage> chatMessageSerializeConvert = new SerializeConvert<>();
+    static final SerializeConvert<User> userSerializeConvert = new SerializeConvert<>();
     static final Scanner read = new Scanner(System.in);
     static String myNickname = "";
     static InetAddress myAddress;
@@ -22,6 +23,7 @@ public class MultCastMessageClient {
     static DatagramSocket datagramSocket;
 
     static ChatRoom actualRoom;
+    static User me;
 
     public static void main(String[] args) {
         try {
@@ -77,9 +79,14 @@ public class MultCastMessageClient {
 
         switch (code) {
             case START_CONNECTION:
+                me = serverResponse.getUser();
+
+                System.out.println(me);
+                System.out.println(serverResponse.getMessage());
+                break;
             case END_CONNECTION:
             case KEEP_CONNECTION:
-                System.out.println(serverResponse.getMensagem());
+                System.out.println(serverResponse.getMessage());
                 break;
             case END_CHAT_ROOM:
                 System.out.println("You leaved the room");
@@ -101,7 +108,7 @@ public class MultCastMessageClient {
                 break;
             }
             default:
-                System.out.println("Resposta desconhecida");
+                System.out.println("Unknown response");
                 break;
         }
     }
@@ -120,14 +127,6 @@ public class MultCastMessageClient {
 
             String message;
             actualRoom.listenRoom(multicastSocket);
-
-            User me = null;
-            for (User member : actualRoom.getMembers()) {
-                if (member.equals(new User(myAddress, myNickname))) {
-                    me = member;
-                    break;
-                }
-            }
 
             boolean exit = false;
             do {
@@ -153,7 +152,7 @@ public class MultCastMessageClient {
                             multicastSocket.send(messageOut);
                             multicastSocket.leaveGroup(multicastAddress);
 
-                            String leaveCommand = command + " " + actualRoom.getName();
+                            String leaveCommand = command + " " + actualRoom.getName() + " " + myNickname;
                             request = new DatagramPacket(leaveCommand.getBytes(), leaveCommand.length(), myAddress, ConnectionConfigurations.SERVER_PORT);
                             sendDataToServer();
 

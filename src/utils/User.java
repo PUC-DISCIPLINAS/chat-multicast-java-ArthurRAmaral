@@ -5,12 +5,18 @@ import java.net.InetAddress;
 import java.util.Objects;
 
 public class User implements Serializable {
-    InetAddress address;
-    String nickname;
+    private InetAddress address;
+    private int port;
+    private String nickname;
 
-    public User(InetAddress address, String nickname) {
+    public User(InetAddress address, int port, String nickname) {
         this.address = address;
+        this.port = port;
         this.nickname = nickname;
+    }
+
+    public int getPort() {
+        return port;
     }
 
     public InetAddress getAddress() {
@@ -32,6 +38,7 @@ public class User implements Serializable {
         if (o == null || getClass() != o.getClass()) return false;
         User user = (User) o;
         return Objects.equals(address, user.address) &&
+                Objects.equals(port, user.port) &&
                 Objects.equals(nickname, user.nickname);
     }
 
