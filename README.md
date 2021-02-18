@@ -1,18 +1,23 @@
 # Multicast chat
+### Autor 
+Arthur Rocha Amaral
 >### Como utilizar
-> - Se direcione até o diretorio que contem os arquivos .class:
+> Execute o 
+> - Se direcione até o diretório que contém os arquivos com extensão .java e compile as classes MulticastMessageServer e MulticastMessageClient:
 >```bash
->cd out/production/chat-multicast-java-ArthurRAmaral/
+>cd src
+>javac MulticastMessageServer.java
+>javac MulticastMessageClient.java
 >```
->- Para executar o server:
+>- Após compilar execute o multicast server:
 >```bash
->java MultCastMessageServer
+>java MulticastMessageServer
 >```
->- Para executar o client:
+>- Depois de executar o multicast server, execute o client:
 >```bash
->java MultCastMessageClient
+>java MulticastMessageClient
 >```
- 
+
 ---
 >### Ao iniciar
 >Ao iniciar o Server, ele irá printar no console todas as mensagens que ele receber.
@@ -20,6 +25,7 @@
 >
 >Já o Client inicia requisitando o seu nome de usuário.
 >Após isso, insira um dos comandos diponíveis [Comandos disponíveis](#commands) para se comunicar com o Server.
+
 ---
 > ### <a name="commands"></a> Comandos disponíveis
 > ##### Quando fora de uma sala 

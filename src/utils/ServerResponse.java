@@ -7,21 +7,22 @@ import java.util.List;
 
 public class ServerResponse implements Serializable {
     private ResponseCode code = ResponseCode.KEEP_CONNECTION;
-    private String mensagem = "";
+    private String message = "";
     private ChatRoom chatRoom = null;
     private List<ChatRoom> roomList = null;
+    private User user = null;
 
-    public ServerResponse(String mensagem) {
-        this.mensagem = mensagem;
+    public ServerResponse(String message) {
+        this.message = message;
     }
 
     public ServerResponse(ResponseCode code) {
         this.code = code;
     }
 
-    public ServerResponse(ResponseCode code, String mensagem) {
+    public ServerResponse(ResponseCode code, String message) {
         this.code = code;
-        this.mensagem = mensagem;
+        this.message = message;
     }
 
     public ServerResponse(ResponseCode code, List<ChatRoom> roomList) {
@@ -32,6 +33,16 @@ public class ServerResponse implements Serializable {
     public ServerResponse(ResponseCode code, ChatRoom chatRoom) {
         this.code = code;
         this.chatRoom = chatRoom;
+    }
+
+    public ServerResponse(ResponseCode code, String message, User user) {
+        this.code = code;
+        this.message = message;
+        this.user = user;
+    }
+
+    public User getUser() {
+        return user;
     }
 
     public List<ChatRoom> getRoomList() {
@@ -46,7 +57,7 @@ public class ServerResponse implements Serializable {
         return code;
     }
 
-    public String getMensagem() {
-        return mensagem;
+    public String getMessage() {
+        return message;
     }
 }
