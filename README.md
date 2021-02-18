@@ -24,10 +24,10 @@ Arthur Rocha Amaral
 >Mesmo que tais mensagens não sejam as que o usuário digitou, mas elas correspondem ao que o Client enviou.
 >
 >Já o Client inicia requisitando o seu nome de usuário.
->Após isso, insira um dos comandos diponíveis [Comandos disponíveis](#commands) para se comunicar com o Server.
+>Após isso, insira um dos comandos diponíveis [Comandos disponíveis](#comandos-disponíveis) para se comunicar com o Server.
 
 ---
-> ### <a name="commands"></a> Comandos disponíveis
+> ### Comandos disponíveis
 > ##### Quando fora de uma sala 
 > - ###### `/end` - Para finalizar o Client
 > - ###### `/newroom <nome-da-sala> <endereco-multicast>` - Para se criar uma nova sala e entrar nela
